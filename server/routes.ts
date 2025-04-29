@@ -48,17 +48,6 @@ import Stripe from "stripe";
 import memorystore from "memorystore";
 import { setupSocialAuth } from "./social-auth";
 
-// Initialize Stripe with the API key
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-} else {
-  console.log('Stripe initialized with secret key.');
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-02-24.acacia" as any,
-});
-
 import { registerAdminRoutes } from './admin/admin';
 
 const MemoryStore = memorystore(session);
@@ -523,8 +512,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get the stripe instance from the app
+  const stripe = (app as any).locals.stripe;
+
   // Stripe payment route for one-time payments (used for subscription initialization)
   app.post("/api/create-payment-intent", isAuthenticated, async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ message: "Payment services are currently unavailable" });
+    }
     try {
       const user = req.user as any;
       const { amount, tier } = req.body;
@@ -566,6 +561,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stripe subscription route
   app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ message: "Payment services are currently unavailable" });
+    }
     try {
       const user = req.user as any;
       const { paymentMethodId, priceId, tier } = req.body;

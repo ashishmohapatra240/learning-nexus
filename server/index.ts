@@ -6,9 +6,20 @@ import csurf from "csurf";
 import cookieParser from "cookie-parser";
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import Stripe from "stripe";
 dotenv.config();
 
 const app = express();
+
+let stripe: Stripe | undefined;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-02-24.acacia"
+  });
+  console.log("Stripe initialized with secret key.");
+} else {
+  console.warn("STRIPE_SECRET_KEY not set. Stripe payment features will be disabled.");
+}
 
 // Apply Helmet middleware for secure HTTP headers
 app.use(helmet({
@@ -210,6 +221,9 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// After stripe initialization
+app.locals.stripe = stripe;
 
 (async () => {
   // Initialize database connection with retry capability
