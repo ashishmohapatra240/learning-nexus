@@ -1,6 +1,6 @@
 {
-  "buildCommand": "vite build",
-  "outputDirectory": "dist",
+  "buildCommand": "cd client && vite build",
+  "outputDirectory": "client/dist",
   "framework": "vite",
   "rewrites": [
     {
@@ -8,4 +8,4 @@
       "destination": "/index.html"
     }
   ]
-} 
+}
